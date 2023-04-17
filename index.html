@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snaaake attack! 🐍</title>
+  <style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #122927;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    #logo {
+        display: block;
+        margin: 0 auto;
+        margin-bottom: 20px;
+        max-width: 80%;
+        max-height: 80%;
+    }
+
+    canvas {
+        display: none;
+        border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <img id="logo" src="logo.png" alt="Snaaake attack! 🐍 Logo">
+  <canvas id="game" width="400" height="400"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const logo = document.getElementById('logo');
+    const gridSize = 20;
+    const tileSize = canvas.width / gridSize;
+    let snake, food, direction, gameOver, intervalId;
+
+    let gameStarted = false;
+
+    function init() {
+        logo.style.display = 'none';
+        canvas.style.display = 'block';
+
+        snake = [
+            { x: gridSize / 2, y: gridSize / 2 },
+        ];
+        food = generateFood();
+        direction = '';
+        gameOver = false;
+        clearInterval(intervalId);
+        intervalId = setInterval(gameLoop, 100);
+
+        gameStarted = true;
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+    }
+
+    function update() {
+        if (!direction) return;
+        const newHead = { x: snake[0].x, y: snake[0].y };
+        if (direction === 'left') newHead.x--;
+        if (direction === 'up') newHead.y--;
+        if (direction === 'right') newHead.x++;
+        if (direction === 'down') newHead.y++;
+
+        if (collision(newHead, snake) || newHead.x < 0 || newHead.y < 0 || newHead.x >= gridSize || newHead.y >= gridSize) {
+            gameOver = true;
+            clearInterval(intervalId);
+            return;
+        }
+
+        snake.unshift(newHead);
+
+        if (newHead.x === food.x && newHead.y === food.y) {
+            food = generateFood();
+        } else {
+            snake.pop();
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'green';
+        snake.forEach(s => {
+            ctx.fillRect(s.x * tileSize, s.y * tileSize, tileSize, tileSize);
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(s.x * tileSize, s.y * tileSize, tileSize, tileSize);
+        });
+
+        ctx.fillStyle = 'red';
+        ctx.fillRect(food.x * tileSize, food.y * tileSize, tileSize, tileSize);
+    }
+
+    function generateFood() {
+        let foodPos;
+        do {
+            foodPos = {
+            x: Math.floor(Math.random() * gridSize),
+            y: Math.floor(Math.random() * gridSize),
+            };
+        } while (collision(foodPos, snake));
+        return foodPos;
+    }
+
+    function collision(pos, arr) {
+        return arr.some(s => s.x === pos.x && s.y === pos.y);
+    }
+
+    function changeDirection(e) {
+        if (gameOver && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+            init();
+        }
+
+        if (direction === '') {
+            if (e.key === 'ArrowUp') direction = 'up';
+            if (e.key === 'ArrowDown') direction = 'down';
+            if (e.key === 'ArrowLeft') direction = 'left';
+            if (e.key === 'ArrowRight') direction = 'right';
+        } else {
+            if (e.key === 'ArrowUp' && direction !== 'down') direction = 'up';
+            if (e.key === 'ArrowDown' && direction !== 'up') direction = 'down';
+            if (e.key === 'ArrowLeft' && direction !== 'right') direction = 'left';
+            if (e.key === 'ArrowRight' && direction !== 'left') direction = 'right';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (!gameStarted) {
+            init();
+        } else {
+            changeDirection(e);
+        }
+    });
+</script>
+</body>
+</html>
